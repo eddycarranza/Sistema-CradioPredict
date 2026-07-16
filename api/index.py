@@ -139,12 +139,12 @@ def status():
     }
 
 
-@app.get("/health")
+@app.get("/api/health")
 def health():
     return {"status": "healthy"}
 
 
-@app.post("/predict", response_model=Prediccion)
+@app.post("/api/predict", response_model=Prediccion)
 def predict(paciente: Paciente):
     try:
         X = preparar_input(paciente)

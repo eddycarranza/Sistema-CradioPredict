@@ -37,8 +37,8 @@ if __name__ == "__main__":
     r = client.get("/api/status")
     print("GET /api/status ->", r.status_code, r.json())
 
-    r = client.post("/predict", json=paciente_ejemplo)
-    print("POST /predict ->", r.status_code, r.json())
+    r = client.post("/api/predict", json=paciente_ejemplo)
+    print("POST /api/predict ->", r.status_code, r.json())
 
     assert r.status_code == 200
     print("\nOK: la API responde correctamente.")
