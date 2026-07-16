@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CardioPredict — Sistema de apoyo al diagnóstico cardíaco</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="nav">
+  <a href="index.html" class="nav-brand">
+    <div class="mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>
+      </svg>
+    </div>
+    <div>
+      <div class="name">CardioPredict</div>
+      <div class="tag">Sistema de apoyo al diagnóstico cardíaco</div>
+    </div>
+  </a>
+  <div class="nav-links">
+    <a href="index.html" class="active">Inicio</a>
+    <a href="predecir.html">Predicción</a>
+    <a href="metricas.html">Métricas del modelo</a>
+  </div>
+</div>
+
+<div class="hero hero-lg">
+  <div class="hero-inner">
+    <span class="eyebrow">Proyecto de Machine Learning · Ingeniería de Sistemas e IA</span>
+    <h1>Predicción temprana de enfermedad cardíaca<br>a partir de indicadores clínicos</h1>
+    <p class="hero-lead">
+      Las enfermedades cardiovasculares son la principal causa de mortalidad a nivel mundial.
+      Este sistema aplica un modelo de Machine Learning entrenado con 920 casos reales del
+      Heart Disease UCI Dataset para estimar la probabilidad de enfermedad cardíaca a partir
+      de 13 indicadores clínicos, apoyando la detección temprana.
+    </p>
+    <div class="hero-cta">
+      <a href="predecir.html" class="btn-primary">Probar el predictor</a>
+      <a href="metricas.html" class="btn-ghost">Ver métricas del modelo</a>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="stat-grid">
+    <div class="stat-card">
+      <p class="stat-num">920</p>
+      <p class="stat-label">Pacientes en el dataset</p>
+    </div>
+    <div class="stat-card">
+      <p class="stat-num">4</p>
+      <p class="stat-label">Instituciones médicas</p>
+    </div>
+    <div class="stat-card">
+      <p class="stat-num">0.90</p>
+      <p class="stat-label">AUC-ROC del modelo</p>
+    </div>
+    <div class="stat-card">
+      <p class="stat-num">13</p>
+      <p class="stat-label">Indicadores clínicos usados</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="section-title">Sobre el proyecto</p>
+    <p class="section-desc" style="margin-bottom:16px;">
+      El sistema se construyó sobre el <b>Heart Disease UCI Dataset</b>, que combina registros
+      de pacientes de cuatro instituciones médicas internacionales.
+    </p>
+    <div class="grid" style="margin-bottom:4px;">
+      <div>
+        <p class="mini-label">Origen de los datos</p>
+        <ul class="clean-list">
+          <li>Cleveland Clinic Foundation (EE. UU.)</li>
+          <li>Hungarian Institute of Cardiology</li>
+          <li>University Hospital, Zúrich (Suiza)</li>
+          <li>VA Medical Center, Long Beach (EE. UU.)</li>
+        </ul>
+      </div>
+      <div>
+        <p class="mini-label">Pipeline aplicado</p>
+        <ul class="clean-list">
+          <li>Limpieza e imputación de valores faltantes</li>
+          <li>Tratamiento de outliers e inconsistencias</li>
+          <li>Balanceo de clases (submuestreo)</li>
+          <li>Comparación de 4 modelos + validación cruzada</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card disclaimer-card">
+    <p class="disclaimer">
+      Esta herramienta es un proyecto académico de Machine Learning y no constituye consejo,
+      diagnóstico ni tratamiento médico. Ante cualquier síntoma o duda de salud, consulta a un
+      profesional médico calificado.
+    </p>
+  </div>
+</div>
+
+<footer>CardioPredict — proyecto de Machine Learning · Dataset Heart Disease UCI</footer>
+
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Métricas del modelo — CardioPredict</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+</head>
+<body>
+
+<div class="nav">
+  <a href="index.html" class="nav-brand">
+    <div class="mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>
+      </svg>
+    </div>
+    <div>
+      <div class="name">CardioPredict</div>
+      <div class="tag">Sistema de apoyo al diagnóstico cardíaco</div>
+    </div>
+  </a>
+  <div class="nav-links">
+    <a href="index.html">Inicio</a>
+    <a href="predecir.html">Predicción</a>
+    <a href="metricas.html" class="active">Métricas del modelo</a>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="hero-inner">
+    <h1>Desempeño del modelo</h1>
+    <p>Resultados reales obtenidos entrenando y evaluando 4 modelos sobre el conjunto de prueba (20%), tras balancear las clases del dataset.</p>
+  </div>
+</div>
+
+<div class="content">
+
+  <div class="card">
+    <p class="section-title">Comparación de modelos</p>
+    <p class="section-desc">Ordenados por AUC-ROC. Todos superan ampliamente al benchmark (clasificador que siempre predice la clase mayoritaria).</p>
+    <table class="metrics">
+      <thead>
+        <tr><th></th><th>Modelo</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1-Score</th><th>AUC-ROC</th></tr>
+      </thead>
+      <tbody id="metricsBody"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <p class="section-title">AUC-ROC por modelo</p>
+    <p class="section-desc">1.0 = clasificador perfecto · 0.5 = equivalente al azar (línea del benchmark).</p>
+    <div class="chart-wrap"><canvas id="aucChart"></canvas></div>
+  </div>
+
+  <div class="card">
+    <p class="section-title">Importancia de variables</p>
+    <p class="section-desc">Según el modelo Random Forest (reducción de impureza de Gini). Los indicadores con mayor peso predictivo.</p>
+    <div class="chart-wrap" style="height:340px;"><canvas id="featChart"></canvas></div>
+  </div>
+
+  <div class="card">
+    <p class="section-title">Ajuste de hiperparámetros</p>
+    <p class="section-desc">GridSearchCV (5-fold) sobre Random Forest, optimizando F1-Score.</p>
+    <div class="grid">
+      <div>
+        <p class="mini-label">Mejores hiperparámetros encontrados</p>
+        <ul class="clean-list">
+          <li>n_estimators = 100</li>
+          <li>max_depth = 15</li>
+          <li>min_samples_split = 20</li>
+          <li>criterion = entropy</li>
+        </ul>
+      </div>
+      <div>
+        <p class="mini-label">Resultado</p>
+        <ul class="clean-list">
+          <li>F1 promedio (validación cruzada) = 0.8252</li>
+          <li>F1 con hiperparámetros fijos a mano = 0.8113</li>
+          <li>Mejora sobre configuración manual</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="section-title">Análisis de sesgos</p>
+    <p class="section-desc">Desempeño del modelo Random Forest segmentado por subgrupos, para detectar rendimiento desigual.</p>
+    <div class="grid">
+      <div>
+        <p class="mini-label">Por sexo</p>
+        <table class="metrics">
+          <thead><tr><th>Grupo</th><th>n</th><th>Recall</th><th>F1</th></tr></thead>
+          <tbody>
+            <tr><td>Hombre</td><td class="num">124</td><td class="num">0.841</td><td class="num">0.811</td></tr>
+            <tr><td>Mujer</td><td class="num">40</td><td class="num">0.692</td><td class="num">0.783</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <p class="mini-label">Por grupo de edad</p>
+        <table class="metrics">
+          <thead><tr><th>Grupo</th><th>n</th><th>Recall</th><th>F1</th></tr></thead>
+          <tbody>
+            <tr><td>&le; 40</td><td class="num">17</td><td class="num">0.800</td><td class="num">0.800</td></tr>
+            <tr><td>41–55</td><td class="num">74</td><td class="num">0.793</td><td class="num">0.807</td></tr>
+            <tr><td>56–70</td><td class="num">69</td><td class="num">0.822</td><td class="num">0.796</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <p class="disclaimer" style="margin-top:16px; padding-top:14px; border-top:1px solid var(--line);">
+      El Recall es algo menor en mujeres (0.69 vs 0.84 en hombres) posiblemente por el menor tamaño de esa
+      submuestra tras el balanceo de clases (n=40). Es un punto de atención antes de un uso clínico real.
+    </p>
+  </div>
+
+</div>
+
+<footer>CardioPredict — proyecto de Machine Learning · Dataset Heart Disease UCI</footer>
+
+<script>
+  const modelos = [
+    { nombre: 'Logistic Regression', accuracy: 0.811, precision: 0.807, recall: 0.817, f1: 0.812, auc: 0.900 },
+    { nombre: 'SVM',                 accuracy: 0.811, precision: 0.807, recall: 0.817, f1: 0.812, auc: 0.892 },
+    { nombre: 'Random Forest',       accuracy: 0.805, precision: 0.798, recall: 0.817, f1: 0.807, auc: 0.870 },
+    { nombre: 'Decision Tree',       accuracy: 0.750, precision: 0.773, recall: 0.707, f1: 0.739, auc: 0.749 },
+    { nombre: 'Benchmark (Dummy)',   accuracy: 0.500, precision: 0.000, recall: 0.000, f1: 0.000, auc: 0.500 },
+  ];
+
+  const tbody = document.getElementById('metricsBody');
+  modelos.forEach((m, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="rank-badge ${i === 0 ? 'rank-1' : ''}">${i + 1}</span></td>
+      <td>${m.nombre}</td>
+      <td class="num">${m.accuracy.toFixed(3)}</td>
+      <td class="num">${m.precision.toFixed(3)}</td>
+      <td class="num">${m.recall.toFixed(3)}</td>
+      <td class="num">${m.f1.toFixed(3)}</td>
+      <td class="num">${m.auc.toFixed(3)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  const navy = '#0f2942', teal = '#0e7c7b', line = '#e2e7ee';
+
+  new Chart(document.getElementById('aucChart'), {
+    type: 'bar',
+    data: {
+      labels: modelos.map(m => m.nombre),
+      datasets: [{
+        data: modelos.map(m => m.auc),
+        backgroundColor: modelos.map((_, i) => i === 0 ? teal : '#bcd6d5'),
+        borderRadius: 6,
+        maxBarThickness: 46,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { min: 0, max: 1, grid: { color: line }, ticks: { color: '#5b6b82', font: { size: 11 } } },
+        x: { grid: { display: false }, ticks: { color: '#5b6b82', font: { size: 11 } } }
+      }
+    }
+  });
+
+  const features = [
+    ['thalch', 0.1289], ['age', 0.0983], ['oldpeak', 0.0983], ['chol', 0.0951],
+    ['exang', 0.0849], ['cp: angina atípica', 0.0773], ['trestbps', 0.0721],
+    ['sexo: masculino', 0.0480], ['institución: Suiza', 0.0426], ['cp: no anginoso', 0.0363],
+  ];
+
+  new Chart(document.getElementById('featChart'), {
+    type: 'bar',
+    data: {
+      labels: features.map(f => f[0]),
+      datasets: [{
+        data: features.map(f => f[1]),
+        backgroundColor: navy,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: line }, ticks: { color: '#5b6b82', font: { size: 11 } } },
+        y: { grid: { display: false }, ticks: { color: '#5b6b82', font: { size: 12 } } }
+      }
+    }
+  });
+</script>
+</body>
+</html>

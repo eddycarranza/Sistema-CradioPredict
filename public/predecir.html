@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Predicción — CardioPredict</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="nav">
+  <a href="index.html" class="nav-brand">
+    <div class="mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>
+      </svg>
+    </div>
+    <div>
+      <div class="name">CardioPredict</div>
+      <div class="tag">Sistema de apoyo al diagnóstico cardíaco</div>
+    </div>
+  </a>
+  <div class="nav-links">
+    <a href="index.html">Inicio</a>
+    <a href="predecir.html" class="active">Predicción</a>
+    <a href="metricas.html">Métricas del modelo</a>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="hero-inner">
+    <h1>Evaluación de riesgo de enfermedad cardíaca</h1>
+    <p>Ingresa los indicadores clínicos del paciente y el modelo estima la probabilidad de presencia de enfermedad cardíaca en segundos.</p>
+    <div class="badges">
+      <span class="badge">Modelo: <b>&nbsp;Regresión Logística</b></span>
+      <span class="badge">AUC-ROC: <b>&nbsp;0.90</b></span>
+      <span class="badge">Entrenado con <b>&nbsp;920 pacientes reales</b></span>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <form class="card" id="form">
+    <p class="section-title">Datos del paciente</p>
+    <p class="section-desc">Completa los 13 indicadores clínicos usados por el modelo.</p>
+
+    <div class="group">
+      <p class="group-label">Perfil del paciente</p>
+      <div class="grid">
+        <div class="field">
+          <label for="age">Edad <span class="hint">(años)</span></label>
+          <input type="number" id="age" value="63" required />
+        </div>
+        <div class="field">
+          <label for="sex">Sexo</label>
+          <select id="sex">
+            <option value="Male">Masculino</option>
+            <option value="Female">Femenino</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="dataset">Institución de origen</label>
+          <select id="dataset">
+            <option value="Cleveland">Cleveland</option>
+            <option value="Hungary">Hungría</option>
+            <option value="Switzerland">Suiza</option>
+            <option value="VA Long Beach">VA Long Beach</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="cp">Tipo de dolor de pecho</label>
+          <select id="cp">
+            <option value="typical angina">Angina típica</option>
+            <option value="atypical angina">Angina atípica</option>
+            <option value="non-anginal">No anginoso</option>
+            <option value="asymptomatic">Asintomático</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="group">
+      <p class="group-label">Signos vitales y laboratorio</p>
+      <div class="grid">
+        <div class="field">
+          <label for="trestbps">Presión arterial en reposo <span class="hint">(mmHg)</span></label>
+          <input type="number" id="trestbps" value="145" required />
+        </div>
+        <div class="field">
+          <label for="chol">Colesterol sérico <span class="hint">(mg/dl)</span></label>
+          <input type="number" id="chol" value="233" required />
+        </div>
+        <div class="field">
+          <label for="thalch">Frecuencia cardíaca máxima</label>
+          <input type="number" id="thalch" value="150" required />
+        </div>
+        <div class="field">
+          <div class="check">
+            <input type="checkbox" id="fbs" />
+            <label for="fbs">Glucemia en ayunas &gt; 120 mg/dl</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="group">
+      <p class="group-label">Resultados de pruebas</p>
+      <div class="grid">
+        <div class="field">
+          <label for="restecg">ECG en reposo</label>
+          <select id="restecg">
+            <option value="normal">Normal</option>
+            <option value="st-t abnormality">Anomalía ST-T</option>
+            <option value="lv hypertrophy">Hipertrofia ventricular izq.</option>
+          </select>
+        </div>
+        <div class="field">
+          <div class="check">
+            <input type="checkbox" id="exang" />
+            <label for="exang">Angina inducida por ejercicio</label>
+          </div>
+        </div>
+        <div class="field">
+          <label for="oldpeak">Depresión del segmento ST</label>
+          <input type="number" step="0.1" id="oldpeak" value="2.3" required />
+        </div>
+        <div class="field">
+          <label for="slope">Pendiente del segmento ST</label>
+          <select id="slope">
+            <option value="upsloping">Ascendente</option>
+            <option value="flat">Plana</option>
+            <option value="downsloping">Descendente</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="ca">N° de vasos coloreados <span class="hint">(0-3)</span></label>
+          <input type="number" id="ca" value="0" min="0" max="3" required />
+        </div>
+        <div class="field">
+          <label for="thal">Talasemia</label>
+          <select id="thal">
+            <option value="normal">Normal</option>
+            <option value="fixed defect">Defecto fijo</option>
+            <option value="reversable defect">Defecto reversible</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="submit-row">
+      <button type="submit" class="primary" id="submitBtn">Evaluar riesgo</button>
+      <span class="submit-note">El resultado aparece abajo en unos segundos.</span>
+    </div>
+
+    <p id="error"></p>
+
+    <button type="button" class="adv-toggle" id="advToggle">Configuración avanzada</button>
+    <div class="adv-panel" id="advPanel">
+      <div class="field">
+        <label for="apiBase">URL base de la API</label>
+        <input type="text" id="apiBase" />
+      </div>
+    </div>
+  </form>
+
+  <div class="card" id="result">
+    <div class="result-head">
+      <p class="section-title" style="margin:0;">Resultado</p>
+      <span class="risk-pill" id="riskPill"><span class="dot"></span><span id="riskLabel"></span></span>
+    </div>
+    <p class="prob-num" id="probNum"></p>
+    <p class="prob-label">Probabilidad estimada de enfermedad cardíaca</p>
+    <div class="bar-track"><div class="bar-fill" id="barFill" style="width:0%"></div></div>
+    <p class="disclaimer" style="margin-top:18px; padding-top:16px; border-top:1px solid var(--line);">
+      Esta herramienta es un proyecto académico de Machine Learning y no constituye consejo,
+      diagnóstico ni tratamiento médico. Ante cualquier síntoma o duda de salud, consulta a un
+      profesional médico calificado.
+    </p>
+  </div>
+</div>
+
+<footer>CardioPredict — proyecto de Machine Learning · Dataset Heart Disease UCI</footer>
+
+<script>
+  const form = document.getElementById('form');
+  const submitBtn = document.getElementById('submitBtn');
+  const errorEl = document.getElementById('error');
+  const resultEl = document.getElementById('result');
+  const probNum = document.getElementById('probNum');
+  const barFill = document.getElementById('barFill');
+  const riskPill = document.getElementById('riskPill');
+  const riskLabel = document.getElementById('riskLabel');
+
+  const apiBaseInput = document.getElementById('apiBase');
+  apiBaseInput.value = (location.protocol === 'file:') ? 'http://localhost:8000' : '';
+  apiBaseInput.placeholder = (location.protocol === 'file:') ? 'http://localhost:8000' : '(mismo dominio, dejar vacío)';
+
+  document.getElementById('advToggle').addEventListener('click', () => {
+    const p = document.getElementById('advPanel');
+    p.style.display = p.style.display === 'block' ? 'none' : 'block';
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorEl.style.display = 'none';
+    resultEl.style.display = 'none';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Evaluando...';
+
+    const apiBase = apiBaseInput.value.replace(/\/$/, '');
+
+    const payload = {
+      age: Number(document.getElementById('age').value),
+      sex: document.getElementById('sex').value,
+      dataset: document.getElementById('dataset').value,
+      cp: document.getElementById('cp').value,
+      trestbps: Number(document.getElementById('trestbps').value),
+      chol: Number(document.getElementById('chol').value),
+      fbs: document.getElementById('fbs').checked,
+      restecg: document.getElementById('restecg').value,
+      thalch: Number(document.getElementById('thalch').value),
+      exang: document.getElementById('exang').checked,
+      oldpeak: Number(document.getElementById('oldpeak').value),
+      slope: document.getElementById('slope').value,
+      ca: Number(document.getElementById('ca').value),
+      thal: document.getElementById('thal').value,
+    };
+
+    try {
+      const res = await fetch(`${apiBase}/predict`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || `Error ${res.status}`);
+
+      const pct = data.probabilidad_enfermedad * 100;
+      probNum.textContent = pct.toFixed(1) + '%';
+      barFill.style.width = pct.toFixed(1) + '%';
+
+      let tier = 'ok', label = 'Riesgo bajo';
+      if (pct >= 66) { tier = 'danger'; label = 'Riesgo alto'; }
+      else if (pct >= 33) { tier = 'warn'; label = 'Riesgo moderado'; }
+
+      riskPill.className = 'risk-pill risk-' + tier;
+      barFill.className = 'bar-fill fill-' + tier;
+      riskLabel.textContent = label + ' · ' + data.diagnostico;
+
+      resultEl.style.display = 'block';
+      resultEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } catch (err) {
+      errorEl.textContent = `No se pudo conectar con la API (${apiBase || location.origin}): ${err.message}`;
+      errorEl.style.display = 'block';
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Evaluar riesgo';
+    }
+  });
+</script>
+</body>
+</html>
