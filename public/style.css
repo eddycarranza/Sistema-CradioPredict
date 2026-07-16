@@ -179,4 +179,16 @@ table.metrics td.num{ font-variant-numeric:tabular-nums; }
 
 .chart-wrap{ position:relative; height:280px; margin-top:6px; }
 
+.factor-row{ display:flex; align-items:center; gap:12px; padding:8px 0; }
+.factor-name{ flex:0 0 220px; font-size:13px; color:var(--ink); }
+.factor-track{ flex:1; height:8px; border-radius:999px; background:#eef1f5; position:relative; overflow:hidden; }
+.factor-fill{ position:absolute; top:0; bottom:0; border-radius:999px; }
+.factor-fill.up{ background:var(--danger); left:50%; }
+.factor-fill.down{ background:var(--ok); right:50%; }
+.factor-mid{ position:absolute; left:50%; top:-2px; bottom:-2px; width:1px; background:var(--line); }
+.factor-tag{ flex:0 0 auto; font-size:11.5px; font-weight:600; width:60px; text-align:right; }
+.factor-tag.up{ color:var(--danger); }
+.factor-tag.down{ color:var(--ok); }
+@media (max-width:560px){ .factor-name{ flex-basis:140px; font-size:12px; } }
+
 footer{ text-align:center; padding:26px 24px 40px; font-size:12px; color:var(--ink-soft); }

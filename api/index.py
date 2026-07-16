@@ -30,6 +30,31 @@ modelo = joblib.load(MODEL_PATH)
 pipeline = joblib.load(PIPELINE_PATH)
 FEATURE_COLUMNS: list[str] = json.load(open(COLUMNS_PATH))
 
+# Nombres legibles de cada columna, para mostrar la explicación al usuario final
+FEATURE_LABELS = {
+    "age": "Edad",
+    "trestbps": "Presión arterial en reposo",
+    "chol": "Colesterol sérico",
+    "fbs": "Glucemia en ayunas alta",
+    "thalch": "Frecuencia cardíaca máxima",
+    "exang": "Angina inducida por ejercicio",
+    "oldpeak": "Depresión del segmento ST",
+    "ca": "N° de vasos coloreados",
+    "sex_Male": "Sexo masculino",
+    "dataset_Hungary": "Institución: Hungría",
+    "dataset_Switzerland": "Institución: Suiza",
+    "dataset_VA Long Beach": "Institución: VA Long Beach",
+    "cp_atypical angina": "Dolor de pecho: angina atípica",
+    "cp_non-anginal": "Dolor de pecho: no anginoso",
+    "cp_typical angina": "Dolor de pecho: angina típica",
+    "restecg_normal": "ECG en reposo: normal",
+    "restecg_st-t abnormality": "ECG en reposo: anomalía ST-T",
+    "slope_flat": "Pendiente del ST: plana",
+    "slope_upsloping": "Pendiente del ST: ascendente",
+    "thal_normal": "Talasemia: normal",
+    "thal_reversable defect": "Talasemia: defecto reversible",
+}
+
 app = FastAPI(
     title="Heart Disease Prediction API",
     description="Predice si un paciente tiene enfermedad cardíaca a partir de indicadores clínicos.",
@@ -86,10 +111,17 @@ class Paciente(BaseModel):
     }
 
 
+class Factor(BaseModel):
+    variable: str
+    contribucion: float
+    direccion: Literal["aumenta", "reduce"]
+
+
 class Prediccion(BaseModel):
     prediccion: int
     diagnostico: str
     probabilidad_enfermedad: float
+    factores: list[Factor] = []
 
 
 # ---------------------------------------------------------------------------
@@ -151,6 +183,30 @@ def predict(paciente: Paciente):
         X_proc = pipeline.transform(X)
         pred = int(modelo.predict(X_proc)[0])
         proba = float(modelo.predict_proba(X_proc)[0][1])
+
+        # ---------------------------------------------------------------
+        # Explicación real de la predicción: para un modelo lineal
+        # (Regresión Logística), la contribución exacta de cada variable
+        # al resultado es coeficiente_i * valor_escalado_i. No es una
+        # aproximación tipo SHAP/LIME: es el cálculo real que hace el
+        # modelo internamente, expuesto variable por variable.
+        # ---------------------------------------------------------------
+        factores: list[Factor] = []
+        if hasattr(modelo, "coef_"):
+            contribuciones = modelo.coef_[0] * X_proc[0]
+            top_idx = sorted(
+                range(len(contribuciones)),
+                key=lambda i: abs(contribuciones[i]),
+                reverse=True,
+            )[:6]
+            for i in top_idx:
+                col = FEATURE_COLUMNS[i]
+                valor = float(contribuciones[i])
+                factores.append(Factor(
+                    variable=FEATURE_LABELS.get(col, col),
+                    contribucion=round(valor, 4),
+                    direccion="aumenta" if valor > 0 else "reduce",
+                ))
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=400, detail=f"Error al procesar la predicción: {exc}") from exc
 
@@ -158,4 +214,5 @@ def predict(paciente: Paciente):
         prediccion=pred,
         diagnostico="Con enfermedad cardíaca" if pred == 1 else "Sin enfermedad cardíaca",
         probabilidad_enfermedad=round(proba, 4),
+        factores=factores,
     )
