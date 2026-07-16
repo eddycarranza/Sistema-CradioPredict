@@ -25,10 +25,23 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 MODEL_PATH = BASE_DIR / "model" / "modelo_heart_disease.joblib"
 PIPELINE_PATH = BASE_DIR / "model" / "pipeline_preprocesamiento.joblib"
 COLUMNS_PATH = BASE_DIR / "model" / "feature_columns.json"
+THRESHOLDS_PATH = BASE_DIR / "model" / "decision_thresholds.json"
 
 modelo = joblib.load(MODEL_PATH)
 pipeline = joblib.load(PIPELINE_PATH)
 FEATURE_COLUMNS: list[str] = json.load(open(COLUMNS_PATH))
+
+# Umbrales de decision (probabilidad -> clase) calibrados por sexo. Es la
+# medida de mitigacion de sesgos del proyecto: el analisis por subgrupo
+# (seccion 8.4/11.2 del informe) mostro que, con el umbral por defecto de
+# 0.5, el Recall en mujeres era notablemente menor que en hombres. En vez
+# de reentrenar el modelo, se calibro (en train.py, paso 9) un umbral mas
+# bajo para el grupo en desventaja, exigiendo que su precision no empeore
+# respecto al umbral por defecto. Ver model/decision_thresholds.json.
+try:
+    DECISION_THRESHOLDS: dict = json.load(open(THRESHOLDS_PATH))
+except FileNotFoundError:
+    DECISION_THRESHOLDS = {"_default": 0.5}
 
 # Nombres legibles de cada columna, para mostrar la explicación al usuario final
 FEATURE_LABELS = {
@@ -122,6 +135,8 @@ class Prediccion(BaseModel):
     diagnostico: str
     probabilidad_enfermedad: float
     factores: list[Factor] = []
+    umbral_aplicado: float
+    nota_umbral: str
 
 
 # ---------------------------------------------------------------------------
@@ -168,6 +183,7 @@ def status():
         "status": "ok",
         "modelo": type(modelo).__name__,
         "n_features": len(FEATURE_COLUMNS),
+        "umbrales_decision": DECISION_THRESHOLDS,
     }
 
 
@@ -181,8 +197,13 @@ def predict(paciente: Paciente):
     try:
         X = preparar_input(paciente)
         X_proc = pipeline.transform(X)
-        pred = int(modelo.predict(X_proc)[0])
         proba = float(modelo.predict_proba(X_proc)[0][1])
+
+        # Umbral calibrado por sexo (mitigacion de sesgo, ver comentario arriba).
+        # Si el grupo del paciente no tiene un umbral especifico calibrado,
+        # se usa el umbral por defecto (0.5).
+        umbral = DECISION_THRESHOLDS.get(paciente.sex, DECISION_THRESHOLDS.get("_default", 0.5))
+        pred = int(proba >= umbral)
 
         # ---------------------------------------------------------------
         # Explicación real de la predicción: para un modelo lineal
@@ -215,4 +236,11 @@ def predict(paciente: Paciente):
         diagnostico="Con enfermedad cardíaca" if pred == 1 else "Sin enfermedad cardíaca",
         probabilidad_enfermedad=round(proba, 4),
         factores=factores,
+        umbral_aplicado=umbral,
+        nota_umbral=(
+            "Umbral calibrado por sexo como medida de mitigación de sesgo: "
+            "el análisis por subgrupo mostró menor Recall en mujeres con el "
+            "umbral por defecto (0.5), por lo que se ajustó para ese grupo "
+            "sin reducir su precisión."
+        ) if umbral != 0.5 else "Umbral por defecto (0.5); no se detectó necesidad de calibración para este grupo.",
     )

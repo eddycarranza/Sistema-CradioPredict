@@ -174,6 +174,7 @@
     <p class="prob-num" id="probNum"></p>
     <p class="prob-label">Probabilidad estimada de enfermedad cardíaca</p>
     <div class="bar-track"><div class="bar-fill" id="barFill" style="width:0%"></div></div>
+    <p class="submit-note" id="umbralNote" style="margin-top:10px;"></p>
 
     <div id="factoresBox" style="margin-top:24px; padding-top:20px; border-top:1px solid var(--line); display:none;">
       <p class="mini-label">Por qué el modelo llegó a este resultado</p>
@@ -259,6 +260,13 @@
       riskPill.className = 'risk-pill risk-' + tier;
       barFill.className = 'bar-fill fill-' + tier;
       riskLabel.textContent = label + ' · ' + data.diagnostico;
+
+      const umbralNote = document.getElementById('umbralNote');
+      if (data.nota_umbral) {
+        umbralNote.textContent = `Umbral de decisión aplicado: ${data.umbral_aplicado} — ${data.nota_umbral}`;
+      } else {
+        umbralNote.textContent = '';
+      }
 
       const factoresBox = document.getElementById('factoresBox');
       const factoresList = document.getElementById('factoresList');

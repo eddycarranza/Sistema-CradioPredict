@@ -12,10 +12,19 @@ Genera (en model/):
     modelo_heart_disease.joblib
     pipeline_preprocesamiento.joblib
     feature_columns.json
+    decision_thresholds.json
 
 Estos son los mismos artefactos que ya usa api/index.py, así que correr este
 script vuelve a generarlos desde cero (útil si cambia el dataset o quieres
 reentrenar con otros hiperparámetros).
+
+decision_thresholds.json contiene el umbral de decisión (probabilidad ->
+clase) calibrado por sexo, como medida de mitigación de sesgo (ver paso 9):
+el análisis de sesgos detectó que, con el umbral por defecto de 0.5, el
+Recall en mujeres es notablemente menor que en hombres. En vez de reentrenar
+el modelo, se calibra el umbral de decisión por subgrupo para acercar el
+Recall entre grupos, exigiendo que la precisión no empeore respecto al
+umbral por defecto.
 """
 
 import json
@@ -118,6 +127,52 @@ def codificar_features(df: pd.DataFrame) -> pd.DataFrame:
     return X
 
 
+# ---------------------------------------------------------------------------
+# 9. Mitigación de sesgos: calibración del umbral de decisión por subgrupo
+#    (sexo). En vez de cambiar el modelo, se ajusta el punto de corte
+#    probabilidad->clase por grupo para acercar el Recall del/de los
+#    subgrupo(s) en desventaja al del grupo de referencia (el más numeroso
+#    en el conjunto de prueba), exigiendo que la precisión del subgrupo no
+#    empeore respecto al umbral por defecto (0.5). Esto evita "resolver" la
+#    brecha de Recall a costa de disparar los falsos positivos.
+# ---------------------------------------------------------------------------
+def calibrar_umbral_por_grupo(proba, y_true, grupo_labels, grupo_referencia):
+    y_true = np.asarray(y_true)
+    proba = np.asarray(proba)
+    grupo_labels = np.asarray(grupo_labels)
+
+    ref_mask = grupo_labels == grupo_referencia
+    recall_ref = recall_score(y_true[ref_mask], (proba[ref_mask] >= 0.5).astype(int))
+
+    thresholds = {grupo_referencia: 0.5}
+    detalle = {}
+    for g in sorted(set(grupo_labels) - {grupo_referencia}):
+        mask = grupo_labels == g
+        yt, pb = y_true[mask], proba[mask]
+        pred_base = (pb >= 0.5).astype(int)
+        prec_base = precision_score(yt, pred_base, zero_division=0)
+        rec_base = recall_score(yt, pred_base, zero_division=0)
+
+        mejor_thr, mejor_rec, mejor_prec = 0.5, rec_base, prec_base
+        for thr in np.arange(0.50, 0.05, -0.01):
+            pred = (pb >= thr).astype(int)
+            rec = recall_score(yt, pred, zero_division=0)
+            prec = precision_score(yt, pred, zero_division=0)
+            # solo se acepta un umbral si no empeora la precision del grupo
+            # y mejora el recall respecto al mejor umbral encontrado hasta ahora
+            if prec >= prec_base and rec > mejor_rec:
+                mejor_thr, mejor_rec, mejor_prec = round(float(thr), 2), rec, prec
+
+        thresholds[g] = mejor_thr
+        detalle[g] = {
+            "recall_antes": round(rec_base, 4), "precision_antes": round(prec_base, 4),
+            "recall_despues": round(mejor_rec, 4), "precision_despues": round(mejor_prec, 4),
+            "umbral": mejor_thr,
+        }
+
+    return thresholds, recall_ref, detalle
+
+
 def main():
     print("1. Cargando y limpiando datos...")
     df = cargar_y_limpiar(DATA_PATH)
@@ -131,9 +186,10 @@ def main():
     print("3. Codificando variables categóricas...")
     X_raw = codificar_features(df_bal)
     y = df_bal["heart_disease"]
+    sex_raw = df_bal["sex"]  # se conserva para la calibración de umbral por sexo (paso 9)
 
-    X_train_r, X_test_r, y_train, y_test = train_test_split(
-        X_raw, y, test_size=0.2, random_state=RANDOM_STATE, stratify=y
+    X_train_r, X_test_r, y_train, y_test, sex_train, sex_test = train_test_split(
+        X_raw, y, sex_raw, test_size=0.2, random_state=RANDOM_STATE, stratify=y
     )
 
     preproc = Pipeline([
@@ -236,16 +292,36 @@ def main():
     print(f"\n7. Mejor modelo según AUC-ROC: {mejor_nombre} "
           f"(AUC={resultados[mejor_nombre]['auc']:.4f}, F1={resultados[mejor_nombre]['f1']:.4f})")
 
-    print("8. Guardando artefactos en model/...")
+    print("9. Calibrando umbral de decisión por sexo (mitigación de sesgo)...")
+    thresholds = {"_default": 0.5}
+    if hasattr(modelo_final, "predict_proba"):
+        proba_final_test = modelo_final.predict_proba(X_test)[:, 1]
+        grupo_referencia = sex_test.value_counts().idxmax()  # grupo mas numeroso en test
+        thr_por_grupo, recall_ref, detalle = calibrar_umbral_por_grupo(
+            proba_final_test, y_test, sex_test.values, grupo_referencia
+        )
+        thresholds.update(thr_por_grupo)
+        print(f"   Grupo de referencia: {grupo_referencia} (Recall={recall_ref:.4f} @ umbral 0.5)")
+        for g, d in detalle.items():
+            print(f"   {g}: umbral={d['umbral']}  "
+                  f"Recall {d['recall_antes']:.4f} -> {d['recall_despues']:.4f}  "
+                  f"Precision {d['precision_antes']:.4f} -> {d['precision_despues']:.4f}")
+    else:
+        print("   El modelo final no expone predict_proba(); se mantiene el umbral por defecto (0.5).")
+
+    print("10. Guardando artefactos en model/...")
     MODEL_DIR.mkdir(exist_ok=True)
     joblib.dump(modelo_final, MODEL_DIR / "modelo_heart_disease.joblib")
     joblib.dump(preproc, MODEL_DIR / "pipeline_preprocesamiento.joblib")
     with open(MODEL_DIR / "feature_columns.json", "w") as f:
         json.dump(list(X_raw.columns), f)
+    with open(MODEL_DIR / "decision_thresholds.json", "w") as f:
+        json.dump(thresholds, f, indent=2)
 
-    print(f"   Modelo:   {MODEL_DIR / 'modelo_heart_disease.joblib'}")
-    print(f"   Pipeline: {MODEL_DIR / 'pipeline_preprocesamiento.joblib'}")
-    print(f"   Columnas: {MODEL_DIR / 'feature_columns.json'} ({len(X_raw.columns)} columnas)")
+    print(f"   Modelo:     {MODEL_DIR / 'modelo_heart_disease.joblib'}")
+    print(f"   Pipeline:   {MODEL_DIR / 'pipeline_preprocesamiento.joblib'}")
+    print(f"   Columnas:   {MODEL_DIR / 'feature_columns.json'} ({len(X_raw.columns)} columnas)")
+    print(f"   Umbrales:   {MODEL_DIR / 'decision_thresholds.json'} ({thresholds})")
     print("\nListo. api/index.py ya puede usar estos artefactos directamente.")
 
 

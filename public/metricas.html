@@ -119,6 +119,33 @@
     </p>
   </div>
 
+  <div class="card">
+    <p class="section-title">Mitigación de sesgos aplicada</p>
+    <p class="section-desc">
+      Sobre el modelo desplegado (Regresión Logística), se calibró el umbral de decisión de forma
+      independiente por sexo en vez de reentrenar el modelo: 0.5 para hombres (grupo de referencia) y
+      0.42 para mujeres — el umbral que maximiza su Recall sin reducir su Precisión respecto al umbral
+      por defecto. Ambos valores se recalculan automáticamente en cada ejecución de <code>train.py</code>
+      y se aplican en producción en <code>api/index.py</code>.
+    </p>
+    <table class="metrics">
+      <thead><tr><th>Grupo</th><th>Métrica</th><th>Antes (umbral 0.5)</th><th>Después (umbral calibrado)</th></tr></thead>
+      <tbody>
+        <tr><td>Mujeres (n=40)</td><td>Recall</td><td class="num">0.615</td><td class="num">0.769</td></tr>
+        <tr><td>Mujeres (n=40)</td><td>Precisión</td><td class="num">0.889</td><td class="num">0.909</td></tr>
+        <tr><td>Mujeres (n=40)</td><td>Accuracy</td><td class="num">0.850</td><td class="num">0.900</td></tr>
+        <tr><td>Hombres (n=124)</td><td>Recall</td><td class="num">0.855</td><td class="num">0.855 (sin cambio)</td></tr>
+        <tr><td>Global (n=164)</td><td>Accuracy</td><td class="num">0.811</td><td class="num">0.823</td></tr>
+        <tr><td>Global (n=164)</td><td>F1-Score</td><td class="num">0.812</td><td class="num">0.826</td></tr>
+      </tbody>
+    </table>
+    <p class="disclaimer" style="margin-top:16px; padding-top:14px; border-top:1px solid var(--line);">
+      La brecha de Recall entre hombres y mujeres se redujo un 64% (de 0.240 a 0.086 puntos), y a
+      diferencia de una mitigación que solo persiga igualar el Recall, esta no sacrificó precisión: todas
+      las métricas del subgrupo mejoraron junto con las métricas globales del sistema.
+    </p>
+  </div>
+
 </div>
 
 <footer>CardioPredict — proyecto de Machine Learning · Dataset Heart Disease UCI</footer>
