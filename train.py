@@ -198,12 +198,45 @@ def main():
         "auc": roc_auc_score(y_test, y_proba_tuned),
     }
 
+    print("6. GridSearchCV sobre Logistic Regression (validación cruzada 5-fold)...")
+    grid_lr = GridSearchCV(
+        LogisticRegression(random_state=RANDOM_STATE),
+        param_grid={
+            "C": [0.01, 0.03, 0.05, 0.1, 0.3, 0.5, 1, 2, 5, 10],
+            "penalty": ["l2"],
+            "solver": ["lbfgs"],
+            "max_iter": [2000],
+        },
+        scoring="roc_auc",
+        cv=cv,
+        n_jobs=2,
+    )
+    grid_lr.fit(X_train, y_train)
+    print(f"   Mejor AUC (CV): {grid_lr.best_score_:.4f}  params={grid_lr.best_params_}")
+
+    lr_tuned = grid_lr.best_estimator_
+    y_pred_lr_tuned = lr_tuned.predict(X_test)
+    y_proba_lr_tuned = lr_tuned.predict_proba(X_test)[:, 1]
+    resultados["Logistic Regression (GridSearchCV)"] = {
+        "modelo": lr_tuned,
+        "accuracy": accuracy_score(y_test, y_pred_lr_tuned),
+        "precision": precision_score(y_test, y_pred_lr_tuned),
+        "recall": recall_score(y_test, y_pred_lr_tuned),
+        "f1": f1_score(y_test, y_pred_lr_tuned),
+        "auc": roc_auc_score(y_test, y_proba_lr_tuned),
+    }
+    print(f"   Test -> Accuracy={resultados['Logistic Regression (GridSearchCV)']['accuracy']:.4f}  "
+          f"AUC={resultados['Logistic Regression (GridSearchCV)']['auc']:.4f}")
+    print("   Nota: la mejora sobre el modelo por defecto suele ser marginal en este dataset "
+          "(820 filas balanceadas) — es de todos modos la elección de C metodológicamente "
+          "correcta porque se valida con 5-fold en vez de una sola partición train/test.")
+
     mejor_nombre = max(resultados, key=lambda k: resultados[k]["auc"])
     modelo_final = resultados[mejor_nombre]["modelo"]
-    print(f"\n6. Mejor modelo según AUC-ROC: {mejor_nombre} "
+    print(f"\n7. Mejor modelo según AUC-ROC: {mejor_nombre} "
           f"(AUC={resultados[mejor_nombre]['auc']:.4f}, F1={resultados[mejor_nombre]['f1']:.4f})")
 
-    print("7. Guardando artefactos en model/...")
+    print("8. Guardando artefactos en model/...")
     MODEL_DIR.mkdir(exist_ok=True)
     joblib.dump(modelo_final, MODEL_DIR / "modelo_heart_disease.joblib")
     joblib.dump(preproc, MODEL_DIR / "pipeline_preprocesamiento.joblib")
