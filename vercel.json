@@ -4,5 +4,8 @@
     "api/index.py": {
       "maxDuration": 15
     }
-  }
+  },
+  "rewrites": [
+    { "source": "/", "destination": "/index.html" }
+  ]
 }

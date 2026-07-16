@@ -34,8 +34,8 @@ paciente_ejemplo = {
 }
 
 if __name__ == "__main__":
-    r = client.get("/")
-    print("GET /       ->", r.status_code, r.json())
+    r = client.get("/api/status")
+    print("GET /api/status ->", r.status_code, r.json())
 
     r = client.post("/predict", json=paciente_ejemplo)
     print("POST /predict ->", r.status_code, r.json())

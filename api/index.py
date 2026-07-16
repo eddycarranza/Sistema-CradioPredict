@@ -130,7 +130,7 @@ def preparar_input(p: Paciente) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
-@app.get("/")
+@app.get("/api/status")
 def status():
     return {
         "status": "ok",
